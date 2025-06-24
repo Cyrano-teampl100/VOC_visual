@@ -11,9 +11,9 @@ function groupByMonthAndLabel(data: any[]) {
 
   data.forEach(row => {
     const month = dayjs(row.date).format("YYYY-MM");
-    const labels = row.label.split(",").map(l => l.trim());
+    const labels = row.label.split(",").map((l: string) => l.trim());
     if (!stats[month]) stats[month] = {};
-    labels.forEach(label => {
+    labels.forEach((label: string) => {
       if (!stats[month][label]) stats[month][label] = 0;
       stats[month][label] += 1;
     });
