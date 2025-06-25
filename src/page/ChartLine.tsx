@@ -16,7 +16,7 @@ const extractAllLabels = (data: any[]) => {
   const set = new Set<string>();
   data.forEach((row) => {
     if (typeof row.label === "string" && row.label.trim() !== "") {
-      row.label.split(",").map((l) => set.add(l.trim()));
+      row.label.split(",").map((l: string) => set.add(l.trim()));
     }
   });
   return Array.from(set).sort(); // 알파벳 순 정렬
@@ -34,7 +34,7 @@ function groupByMonthAndLabel(data: any[], allLabels: string[]) {
     if (!stats[month]) stats[month] = {};
 
     const labels = row.label?.split(",").map((l: string) => l.trim()) || [];
-    labels.forEach((label) => {
+    labels.forEach((label: string) => {
       if (!stats[month][label]) stats[month][label] = 0;
       stats[month][label] += 1;
     });
@@ -42,7 +42,7 @@ function groupByMonthAndLabel(data: any[], allLabels: string[]) {
 
   return Object.entries(stats).map(([month, labelMap]) => {
     const filled: Record<string, number | string> = { month };
-    allLabels.forEach((label) => {
+    allLabels.forEach((label: string) => {
       filled[label] = labelMap[label] || 0;
     });
     return filled;
@@ -61,7 +61,7 @@ function groupByDayAndLabelWithFill(data: any[], targetMonth: string, allLabels:
 
       if (!stats[day]) stats[day] = {};
 
-      labels.forEach((label) => {
+      labels.forEach((label: string) => {
         if (!stats[day][label]) stats[day][label] = 0;
         stats[day][label] += 1;
       });
