@@ -151,12 +151,6 @@ export default function ChartLine() {
   const labelsToShow = selectedLabels;
   const months = monthlyData.map((d) => d.month);
 
-  const toggleLabel = (label: string) => {
-    setSelectedLabels((prev) =>
-      prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]
-    );
-  };
-
   const filteredRaw = rawData.filter((d) => {
     const dateMatch = clickedDate ? dayjs(d.latestUserDate).format("YYYY-MM-DD") === clickedDate : false;
     const labelMatch = selectedLabels.length === 0 || selectedLabels.some((l) => d.label?.includes(l));
