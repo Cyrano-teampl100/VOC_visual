@@ -1,5 +1,6 @@
 import rawData from "../../exported_data.json";
 import { useEffect, useState } from "react";
+import { ReferenceLine } from "recharts";
 import dayjs from "dayjs";
 import {
   LineChart,
@@ -131,22 +132,23 @@ export default function ChartLine() {
   const [selectedMonth, setSelectedMonth] = useState<string>("전체");
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
   const [dailyData, setDailyData] = useState<any[]>([]);
-  const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
+  const [selectedLabels, setSelectedLabels] = useState<string[]>(extractAllLabels(rawData));
   const [clickedDate, setClickedDate] = useState<string | null>(null);
+  const isAllSelected = selectedLabels.length === allLabels.length;
 
   useEffect(() => {
     setMonthlyData(groupByMonthAndLabel(rawData, allLabels));
   }, []);
 
   useEffect(() => {
-    setSelectedLabels([]);
+    setSelectedLabels(allLabels);
     setClickedDate(null);
     if (selectedMonth !== "전체") {
       setDailyData(groupByDayAndLabelWithFill(rawData, selectedMonth, allLabels));
     }
   }, [selectedMonth]);
 
-  const labelsToShow = selectedLabels.length > 0 ? selectedLabels : allLabels;
+  const labelsToShow = selectedLabels;
   const months = monthlyData.map((d) => d.month);
 
   const toggleLabel = (label: string) => {
@@ -160,6 +162,14 @@ export default function ChartLine() {
     const labelMatch = selectedLabels.length === 0 || selectedLabels.some((l) => d.label?.includes(l));
     return dateMatch && labelMatch;
   });
+
+  const toggleSelectAll = () => {
+  if (isAllSelected) {
+    setSelectedLabels([]);
+  } else {
+    setSelectedLabels(allLabels);
+  }
+};
 
   return (
     <div style={{ display: "flex", height: "100%", minHeight: "800px" }}>
@@ -188,12 +198,27 @@ export default function ChartLine() {
           gap: 8,
           justifyContent: "center",
         }}>
+         <label key="전체" style={checkboxStyle(isAllSelected)}>
+            <input
+              type="checkbox"
+              checked={isAllSelected}
+              onChange={toggleSelectAll}
+              style={{ marginRight: 6 }}
+            />
+            전체
+          </label>
           {allLabels.map((label) => (
             <label key={label} style={checkboxStyle(selectedLabels.includes(label))}>
               <input
                 type="checkbox"
                 checked={selectedLabels.includes(label)}
-                onChange={() => toggleLabel(label)}
+                onChange={() => {
+                  const newSelected = selectedLabels.includes(label)
+                    ? selectedLabels.filter((l) => l !== label)
+                    : [...selectedLabels, label];
+
+                  setSelectedLabels(newSelected);
+                }}
                 style={{ marginRight: 6 }}
               />
               {label}
@@ -205,93 +230,125 @@ export default function ChartLine() {
           {selectedMonth === "전체" ? `전체 VOC` : `${selectedMonth} VOC`}
         </h3>
 
-        <ResponsiveContainer width="100%" height={500}>
-          <LineChart
-            data={selectedMonth === "전체" ? monthlyData : dailyData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-            onClick={(e) => {
-              if (e && e.activeLabel && selectedMonth !== "전체") {
-                setClickedDate(e.activeLabel); // YYYY-MM-DD
-              }
-            }}
-          >
-            <XAxis
-              dataKey={selectedMonth === "전체" ? "month" : "day"}
-              tick={selectedMonth === "전체" ? undefined : <CustomTick />}
-              tickFormatter={(str) =>
-                selectedMonth === "전체" ? str : undefined
-              }
-              interval={0}
-              minTickGap={5}
-            />
-            <YAxis allowDecimals={false} />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend verticalAlign="top" height={36} />
-            {labelsToShow.map((label, idx) => (
-              <Line
-                key={label}
-                type="linear"
-                dataKey={label}
-                stroke={`hsl(${(idx * 47) % 360}, 70%, 50%)`}
-                strokeWidth={2}
-                dot={{ r: 2 }}
+        {labelsToShow.length === 0 ? (
+          <div style={{ textAlign: "center", color: "#888", padding: "100px 0" }}>
+            선택된 라벨이 없습니다. 그래프를 보시려면 하나 이상 선택해주세요.
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={500}>
+            <LineChart
+              data={selectedMonth === "전체" ? monthlyData : dailyData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              onClick={(e) => {
+                if (e && e.activeLabel && selectedMonth !== "전체") {
+                  setClickedDate(e.activeLabel); // YYYY-MM-DD
+                }
+              }}
+            >
+              <XAxis
+                dataKey={selectedMonth === "전체" ? "month" : "day"}
+                tick={selectedMonth === "전체" ? undefined : <CustomTick />}
+                tickFormatter={(str) =>
+                  selectedMonth === "전체" ? str : undefined
+                }
+                interval={0}
+                minTickGap={5}
               />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
+              <YAxis allowDecimals={false} />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend verticalAlign="top" height={36} />
+              {clickedDate && selectedMonth !== "전체" && dailyData.some(d => d.day === clickedDate) && (
+                  <ReferenceLine
+                    x={clickedDate}
+                    stroke="#FF0000"
+                    strokeDasharray="3 3"
+                    label={{
+                      value: clickedDate,
+                      position: "top",
+                      fill: "#FF0000",
+                      fontSize: 12,
+                    }}
+                  />
+                )}
+
+
+              {labelsToShow.map((label, idx) => (
+                <Line
+                  key={label}
+                  type="linear"
+                  dataKey={label}
+                  stroke={`hsl(${(idx * 47) % 360}, 70%, 50%)`}
+                  strokeWidth={2}
+                  dot={{ r: 2 }}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
       {/* 우측: 클릭된 VOC 데이터 목록 */}
       <div style={{ flex: 1, borderLeft: "1px solid #ccc", padding: 20, overflowY: "auto" }}>
-        <h4>{clickedDate || "일자를 클릭해주세요"}</h4>
-        {clickedDate && filteredRaw.length === 0 && (
-          <div>해당 날짜에 해당 라벨의 데이터가 없습니다.</div>
-        )}
-        {filteredRaw.map((item, idx) => {
-              const sheetId = "1iItW4KpAhTbQ58fBstohkW0J09uOcwGXsNZfInw_xqs";  // 실제 문서 ID로 교체하세요
-              const gid = "802777913";  // 알려주신 gid 값
-              const rowIndex = rawData.findIndex(row => row.chatId === item.chatId);
-              const sheetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/edit#gid=${gid}&range=A${rowIndex + 2}`;
+        <h4>
+          {labelsToShow.length === 0
+            ? "라벨을 선택해주세요"
+            : clickedDate || "일자를 클릭해주세요"}
+        </h4>
 
-              return (
+        {labelsToShow.length === 0 ? (
+          <div style={{ color: "#888" }}>
+            그래프를 보시려면 라벨을 하나 이상 선택해주세요.
+          </div>
+        ) : clickedDate && filteredRaw.length === 0 ? (
+          <div>해당 날짜에 해당 라벨의 데이터가 없습니다.</div>
+        ) : (
+          filteredRaw.map((item, idx) => {
+            const sheetId = "1iItW4KpAhTbQ58fBstohkW0J09uOcwGXsNZfInw_xqs";
+            const gid = "802777913";
+            const rowIndex = rawData.findIndex(row => row.chatId === item.chatId);
+            const sheetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/edit#gid=${gid}&range=B${rowIndex + 2}`;
+
+            return (
+              <div
+                key={idx}
+                style={{
+                  marginBottom: 16,
+                  borderBottom: "1px dashed #ddd",
+                  paddingBottom: 8,
+                }}
+              >
                 <div
-                  key={idx}
                   style={{
-                    marginBottom: 16,
-                    borderBottom: "1px dashed #ddd",
-                    paddingBottom: 8,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 4,
                   }}
                 >
-                  <div
+                  <div style={{ fontWeight: "bold" }}>{item.label}</div>
+                  <a
+                    href={sheetUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: 4,
+                      fontSize: 12,
+                      textDecoration: "underline",
+                      color: "#007bff",
+                      cursor: "pointer",
                     }}
                   >
-                    <div style={{ fontWeight: "bold" }}>{item.label}</div>
-                    <a
-                      href={sheetUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        fontSize: 12,
-                        textDecoration: "underline",
-                        color: "#007bff",
-                        cursor: "pointer",
-                      }}
-                    >
-                      구글시트에서 보기 →
-                    </a>
-                  </div>
-                  <div style={{ fontWeight: "bold", marginBottom: 4 }}>
-                    {item.latestUserDate}
-                  </div>
-                  <div style={{ whiteSpace: "pre-line" }}>{item.chatText}</div>
+                    구글시트에서 보기 →
+                  </a>
                 </div>
-              );
-            })}
+                <div style={{ fontWeight: "bold", marginBottom: 4 }}>
+                  {item.latestUserDate}
+                </div>
+                <div style={{ whiteSpace: "pre-line" }}>{item.chatText}</div>
+              </div>
+            );
+          })
+        )}
+
 
       </div>
     </div>
