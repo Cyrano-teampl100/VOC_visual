@@ -12,6 +12,13 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+
+// 유효한 데이터만 추출 (예: 2025년에 생성된 채팅방만)
+const validRawData = rawData.filter((row) => {
+  const latestYear = dayjs(row.latestUserDate).year();
+  return latestYear === 2025;
+});
+
 const extractAllLabels = (data: any[]) => {
   const set = new Set<string>();
   data.forEach((row) => {
@@ -128,31 +135,31 @@ const checkboxStyle = (active: boolean): React.CSSProperties => ({
 });
 
 export default function ChartLine() {
-  const allLabels = extractAllLabels(rawData);
+  const allLabels = extractAllLabels(validRawData);
+  const [selectedLabels, setSelectedLabels] = useState<string[]>(allLabels);
   const [selectedMonth, setSelectedMonth] = useState<string>("전체");
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
   const [dailyData, setDailyData] = useState<any[]>([]);
-  const [selectedLabels, setSelectedLabels] = useState<string[]>(extractAllLabels(rawData));
   const [clickedDate, setClickedDate] = useState<string | null>(null);
   const isAllSelected = selectedLabels.length === allLabels.length;
   const [sortOption, setSortOption] = useState<"date" | "label">("date");
 
   useEffect(() => {
-    setMonthlyData(groupByMonthAndLabel(rawData, allLabels));
+    setMonthlyData(groupByMonthAndLabel(validRawData, allLabels));
   }, []);
 
   useEffect(() => {
     setSelectedLabels(allLabels);
     setClickedDate(null);
     if (selectedMonth !== "전체") {
-      setDailyData(groupByDayAndLabelWithFill(rawData, selectedMonth, allLabels));
+      setDailyData(groupByDayAndLabelWithFill(validRawData, selectedMonth, allLabels));
     }
   }, [selectedMonth]);
 
   const labelsToShow = selectedLabels;
   const months = monthlyData.map((d) => d.month);
 
-  const filteredRaw = rawData.filter((d) => {
+  const filteredRaw = validRawData.filter((d) => {
     const dateMatch = clickedDate ? dayjs(d.latestUserDate).format("YYYY-MM-DD") === clickedDate : false;
     const labelMatch = selectedLabels.length === 0 || selectedLabels.some((l) => d.label?.includes(l));
     return dateMatch && labelMatch;
@@ -267,7 +274,7 @@ const sortedRaw = [...filteredRaw].sort((a, b) => {
                     strokeDasharray="3 3"
                     label={{
                       value: clickedDate,
-                      position: "top",
+                      position: "insideTop",
                       fill: "#FF0000",
                       fontSize: 12,
                     }}
@@ -357,7 +364,7 @@ const sortedRaw = [...filteredRaw].sort((a, b) => {
                 <div style={{ fontWeight: "bold", marginBottom: 4 }}>
                   {item.latestUserDate}
                 </div>
-                <div style={{ whiteSpace: "pre-line" }}>{item.chatText}</div>
+                <div style={{ whiteSpace: "pre-line", wordBreak: "break-word" }}>{item.chatText}</div>
               </div>
             );
           })
