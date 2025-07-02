@@ -135,6 +135,7 @@ export default function ChartLine() {
   const [selectedLabels, setSelectedLabels] = useState<string[]>(extractAllLabels(rawData));
   const [clickedDate, setClickedDate] = useState<string | null>(null);
   const isAllSelected = selectedLabels.length === allLabels.length;
+  const [sortOption, setSortOption] = useState<"date" | "label">("date");
 
   useEffect(() => {
     setMonthlyData(groupByMonthAndLabel(rawData, allLabels));
@@ -164,6 +165,14 @@ export default function ChartLine() {
     setSelectedLabels(allLabels);
   }
 };
+
+const sortedRaw = [...filteredRaw].sort((a, b) => {
+  if (sortOption === "date") {
+    return dayjs(a.latestUserDate).unix() - dayjs(b.latestUserDate).unix();
+  } else {
+    return (a.label || "").localeCompare(b.label || "");
+  }
+});
 
   return (
     <div style={{ display: "flex", height: "100%", minHeight: "800px" }}>
@@ -283,6 +292,17 @@ export default function ChartLine() {
 
       {/* 우측: 클릭된 VOC 데이터 목록 */}
       <div style={{ flex: 1, borderLeft: "1px solid #ccc", padding: 20, overflowY: "auto" }}>
+          <label style={{ fontSize: 14, marginRight: 8, fontWeight: "bold" }}>
+            정렬 기준:
+          </label>
+          <select
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value as "date" | "label")}
+            style={{ padding: 4 }}
+          >
+            <option value="date">날짜순</option>
+            <option value="label">라벨순</option>
+          </select>
         <h4>
           {labelsToShow.length === 0
             ? "라벨을 선택해주세요"
@@ -296,7 +316,7 @@ export default function ChartLine() {
         ) : clickedDate && filteredRaw.length === 0 ? (
           <div>해당 날짜에 해당 라벨의 데이터가 없습니다.</div>
         ) : (
-          filteredRaw.map((item, idx) => {
+          sortedRaw.map((item, idx) => {
             const sheetId = "1iItW4KpAhTbQ58fBstohkW0J09uOcwGXsNZfInw_xqs";
             const gid = "802777913";
             const rowIndex = rawData.findIndex(row => row.chatId === item.chatId);
