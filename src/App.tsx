@@ -15,12 +15,13 @@ function App() {
             width: "100%",
             padding: 10,
             height: "100%",
-            margin: "0 auto", // ✅ 여기 추가!
+            margin: "0 auto",
           }}
         >
           <Routes>
-            <Route path="/*" element={<ChartLine />} />
-//             <Route path="/*" element={<ChartTestPage />} />
+            <Route path="/" element={<ChartLine />} />
+            <Route path="/test1" element={<ChartTestPage />} />
+            <Route path="/test2" element={<ChartTestPage />} />
           </Routes>
         </main>
       </div>

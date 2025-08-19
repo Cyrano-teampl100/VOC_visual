@@ -182,7 +182,7 @@ const sortedRaw = [...filteredRaw].sort((a, b) => {
 });
 
   return (
-    <div style={{ display: "flex", height: "100%", minHeight: "800px" }}>
+    <div style={{ display: "flex", height: "100%", minHeight: "800px", transition: "all 0.3s ease-in-out", }}>
       {/* 좌측: 그래프와 라벨 필터 */}
       <div style={{ flex: 2, padding: 20 }}>
         <div style={{ marginBottom: 12, fontWeight: "bold" }}>
