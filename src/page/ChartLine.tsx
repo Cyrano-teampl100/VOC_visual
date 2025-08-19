@@ -12,11 +12,19 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+type Row = {
+  chatId: string;
+  chatText: string;
+  label: string;
+  latestUserDate?: string;
+  firstUserDate?: string;
+};
+const getDateStr = (row: Row) => row.latestUserDate ?? row.firstUserDate ?? "";
 
 // 유효한 데이터만 추출 (예: 2025년에 생성된 채팅방만)
-const validRawData = rawData.filter((row) => {
-  const latestYear = dayjs(row.latestUserDate).year();
-  return latestYear === 2025;
+const validRawData = (rawData as Row[]).filter((row) => {
+  const d = dayjs(getDateStr(row));
+  return d.isValid() && d.year() === 2025;
 });
 
 const extractAllLabels = (data: any[]) => {
@@ -32,7 +40,7 @@ const extractAllLabels = (data: any[]) => {
 function groupByMonthAndLabel(data: any[], allLabels: string[]) {
   const stats: Record<string, Record<string, number>> = {};
   data.forEach((row) => {
-    const date = dayjs(row.latestUserDate);
+    const date = dayjs(getDateStr(row));
     if (!date.isValid()) return;
     const month = date.format("YYYY-MM");
     if (!stats[month]) stats[month] = {};
@@ -56,9 +64,9 @@ function groupByDayAndLabelWithFill(data: any[], targetMonth: string, allLabels:
   const stats: Record<string, Record<string, number>> = {};
 
   data
-    .filter((row) => dayjs(row.latestUserDate).format("YYYY-MM") === targetMonth)
+    .filter((row) => dayjs(getDateStr(row)).format("YYYY-MM") === targetMonth)
     .forEach((row) => {
-      const day = dayjs(row.latestUserDate).format("YYYY-MM-DD");
+      const day = dayjs(getDateStr(row)).format("YYYY-MM-DD");
       const labels = row.label?.split(",").map((l: string) => l.trim()) || [];
       if (!stats[day]) stats[day] = {};
       labels.forEach((label: string) => {
@@ -160,7 +168,9 @@ export default function ChartLine() {
   const months = monthlyData.map((d) => d.month);
 
   const filteredRaw = validRawData.filter((d) => {
-    const dateMatch = clickedDate ? dayjs(d.latestUserDate).format("YYYY-MM-DD") === clickedDate : false;
+    const dateMatch = clickedDate
+      ? dayjs(getDateStr(d)).format("YYYY-MM-DD") === clickedDate
+      : false;
     const labelMatch = selectedLabels.length === 0 || selectedLabels.some((l) => d.label?.includes(l));
     return dateMatch && labelMatch;
   });
@@ -175,7 +185,7 @@ export default function ChartLine() {
 
 const sortedRaw = [...filteredRaw].sort((a, b) => {
   if (sortOption === "date") {
-    return dayjs(a.latestUserDate).unix() - dayjs(b.latestUserDate).unix();
+    return dayjs(getDateStr(a)).unix() - dayjs(getDateStr(b)).unix();
   } else {
     return (a.label || "").localeCompare(b.label || "");
   }
@@ -362,7 +372,7 @@ const sortedRaw = [...filteredRaw].sort((a, b) => {
                   </a>
                 </div>
                 <div style={{ fontWeight: "bold", marginBottom: 4 }}>
-                  {item.latestUserDate}
+                  {getDateStr(item)}
                 </div>
                 <div style={{ whiteSpace: "pre-line", wordBreak: "break-word" }}>{item.chatText}</div>
               </div>
