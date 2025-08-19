@@ -6,9 +6,32 @@ function App() {
   return (
     <BrowserRouter>
       <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-        <header style={{ padding: 16, backgroundColor: "#f0f0f0", textAlign: "center" }}>
+        <header
+          style={{
+            padding: 16,
+            backgroundColor: "#f0f0f0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            position: "relative",
+          }}
+        >
+          {/* 가운데 타이틀 */}
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: "bold" }}>VOC</h1>
+
+          {/* 오른쪽 구석 날짜 */}
+          <span
+            style={{
+              position: "absolute",
+              right: 16,
+              fontSize: 14,
+              color: "#555",
+            }}
+          >
+            last update - 2025-08-19
+          </span>
         </header>
+
 
         <main
           style={{
