@@ -19,7 +19,7 @@ function App() {
           }}
         >
           <Routes>
-            <Route path="/" element={<ChartLine />} />
+            <Route path="/*" element={<ChartLine />} />
             <Route path="/test1" element={<ChartTestPage />} />
             <Route path="/test2" element={<ChartTestPage />} />
           </Routes>
